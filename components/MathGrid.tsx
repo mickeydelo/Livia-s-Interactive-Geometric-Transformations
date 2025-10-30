@@ -273,7 +273,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
   );
 
   return (
-    <div className="w-full h-full aspect-square bg-surface rounded-lg shadow-lg p-4 flex justify-center items-center">
+    <div className="w-full aspect-square bg-background rounded-lg shadow-lg p-4 flex justify-center items-center">
       <svg
         ref={svgRef}
         className={`w-full h-full touch-none ${dragInfo ? 'cursor-grabbing' : 'cursor-crosshair'}`}
@@ -287,7 +287,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
           </filter>
         </defs>
 
-        <rect x={-halfGrid} y={-halfGrid} width={gridSize} height={gridSize} fill="#1f2937" />
+        <rect x={-halfGrid} y={-halfGrid} width={gridSize} height={gridSize} fill="#111827" />
         {renderGridLines()}
         <line x1={-halfGrid * unit} y1="0" x2={halfGrid * unit} y2="0" stroke="#9ca3af" strokeWidth="0.1" />
         <line x1="0" y1={-halfGrid * unit} x2="0" y2={halfGrid * unit} stroke="#9ca3af" strokeWidth="0.1" />

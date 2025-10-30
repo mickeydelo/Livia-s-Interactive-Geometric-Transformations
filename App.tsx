@@ -63,7 +63,7 @@ function App() {
   
   const handleHighlightPoint = useCallback((index: number) => {
     setHighlightedPointIndex(prevIndex => (prevIndex === index ? null : index));
-    gridContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    gridContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
   const handleGridClick = useCallback((point: Point) => {
@@ -195,18 +195,23 @@ function App() {
           </h1>
           <p className="mt-2 text-text-secondary">{instruction}</p>
         </header>
-        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2" ref={gridContainerRef}>
-            <MathGrid
-              points={points}
-              transformedPoints={transformedPoints}
-              onGridClick={handleGridClick}
-              onPointsUpdate={handlePointsUpdate}
-              highlightedPointIndex={highlightedPointIndex}
-              animation={animation}
-            />
+        <main className="lg:grid lg:grid-cols-3 lg:gap-8">
+          <div 
+            className="lg:col-span-2 sticky top-0 lg:static z-10 bg-background mb-8 lg:mb-0" 
+            ref={gridContainerRef}
+          >
+            <div className="w-full max-w-sm mx-auto lg:max-w-none">
+              <MathGrid
+                points={points}
+                transformedPoints={transformedPoints}
+                onGridClick={handleGridClick}
+                onPointsUpdate={handlePointsUpdate}
+                highlightedPointIndex={highlightedPointIndex}
+                animation={animation}
+              />
+            </div>
           </div>
-          <div className="lg:col-span-1 flex flex-col gap-8" style={{maxHeight: 'calc(100vh - 12rem)'}}>
+          <div className="lg:col-span-1 flex flex-col gap-8">
             <Controls 
               onApply={handleApplyTransform} 
               onReset={handleReset} 

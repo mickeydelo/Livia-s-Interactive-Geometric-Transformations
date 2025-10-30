@@ -13,8 +13,8 @@ const TransformationLog: React.FC<TransformationLogProps> = ({ history, onHighli
   const formatPoint = (p: Point) => `(${formatNumber(p.x)}, ${formatNumber(p.y)})`;
 
   return (
-    <div className="bg-surface px-6 py-4 pt-0 rounded-lg shadow-lg flex-grow min-h-0 overflow-y-auto">
-      <h2 className="text-2xl font-bold text-text-primary sticky top-0 bg-surface pt-4 pb-4 z-10">History</h2>
+    <div className="bg-surface px-6 py-4 pt-0 rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold text-text-primary pt-4 pb-4">History</h2>
       {history.length === 0 ? (
         <p className="text-text-secondary text-center py-8">No transformations applied yet.</p>
       ) : (
