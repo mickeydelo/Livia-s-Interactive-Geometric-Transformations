@@ -1,0 +1,5 @@
+{
+  "name": "Geometric Transformations on a Grid",
+  "description": "An interactive web application that allows users to draw a quadrilateral on a Cartesian grid and apply geometric transformations like rotation, reflection, and translation. The application visually displays the transformed shape and provides a detailed mathematical breakdown of how each point's new coordinates were calculated.",
+  "requestFramePermissions": []
+}
