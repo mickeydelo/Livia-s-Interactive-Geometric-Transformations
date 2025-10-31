@@ -222,7 +222,7 @@ function App() {
             </div>
           </div>
           <div className="lg:col-span-1">
-            <div className="flex flex-col gap-8 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)]">
+            <div className="flex flex-col gap-4 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)]">
               <Controls 
                 onApply={handleApplyTransform} 
                 onReset={handleReset} 

@@ -286,7 +286,10 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
   );
 
   return (
-    <div className="w-full aspect-square bg-background rounded-lg shadow-lg flex justify-center items-center">
+    <div 
+      className="w-full aspect-square bg-background rounded-lg flex justify-center items-center"
+      style={{ boxShadow: '0 10px 15px -2px rgba(0, 0, 0, 0.57), 0 5px 7px -4px rgba(0, 0, 0, 0.1)' }}
+    >
       <svg
         ref={svgRef}
         className={`w-full h-full touch-none ${dragInfo ? 'cursor-grabbing' : 'cursor-crosshair'}`}

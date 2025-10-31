@@ -13,8 +13,8 @@ const Controls: React.FC<ControlsProps> = ({ onApply, onReset, isShapeComplete, 
   const [type, setType] = useState<TransformationType>(TransformationType.Rotate);
   const [angle, setAngle] = useState(90);
   const [axis, setAxis] = useState<'x' | 'y'>('y');
-  const [tx, setTx] = useState(2);
-  const [ty, setTy] = useState(3);
+  const [tx, setTx] = useState('2');
+  const [ty, setTy] = useState('3');
 
   const handleApply = () => {
     let params;
@@ -26,16 +26,29 @@ const Controls: React.FC<ControlsProps> = ({ onApply, onReset, isShapeComplete, 
         params = { axis };
         break;
       case TransformationType.Translate:
-        params = { tx, ty };
+        params = { tx: parseFloat(tx) || 0, ty: parseFloat(ty) || 0 };
         break;
     }
     onApply(type, params);
   };
   
+  const handleStep = (value: string, setter: (value: string) => void, step: number) => {
+    const current = parseFloat(value) || 0;
+    setter(String(current + step));
+  };
+  
+  const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (value: string) => void) => {
+    const newValue = e.target.value;
+    if (newValue === '' || newValue === '-' || /^-?\d*\.?\d*$/.test(newValue)) {
+      setter(newValue);
+    }
+  };
+
   const commonInputClass = "w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:ring-2 focus:ring-primary focus:border-primary transition duration-150";
   const commonButtonClass = "w-full py-2 px-4 rounded-md font-semibold transition duration-200";
   const disabledButtonClass = "bg-gray-600 text-gray-400 cursor-not-allowed";
   const enabledButtonClass = "bg-primary hover:bg-indigo-500 text-white";
+  const stepperButtonClass = "px-3 py-2 bg-background border border-border text-text-secondary hover:bg-gray-700 disabled:opacity-50 transition-colors";
 
   return (
     <div className="bg-surface rounded-lg shadow-lg">
@@ -108,25 +121,35 @@ const Controls: React.FC<ControlsProps> = ({ onApply, onReset, isShapeComplete, 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="tx" className="block text-sm font-medium text-text-secondary mb-2">Translate X (dx)</label>
-                  <input
-                    id="tx"
-                    type="number"
-                    value={tx}
-                    onChange={e => setTx(Number(e.target.value))}
-                    className={commonInputClass}
-                    disabled={isAnimating}
-                  />
+                  <div className="flex">
+                    <button type="button" onClick={() => handleStep(tx, setTx, -1)} disabled={isAnimating} className={`${stepperButtonClass} rounded-l-md`} aria-label="Decrement Translate X">-</button>
+                    <input
+                      id="tx"
+                      type="text"
+                      inputMode="decimal"
+                      value={tx}
+                      onChange={(e) => handleNumericChange(e, setTx)}
+                      className="w-full bg-background border-y border-border text-center text-text-primary focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 focus:z-10"
+                      disabled={isAnimating}
+                    />
+                    <button type="button" onClick={() => handleStep(tx, setTx, 1)} disabled={isAnimating} className={`${stepperButtonClass} rounded-r-md`} aria-label="Increment Translate X">+</button>
+                  </div>
                 </div>
                 <div>
                   <label htmlFor="ty" className="block text-sm font-medium text-text-secondary mb-2">Translate Y (dy)</label>
-                  <input
-                    id="ty"
-                    type="number"
-                    value={ty}
-                    onChange={e => setTy(Number(e.target.value))}
-                    className={commonInputClass}
-                    disabled={isAnimating}
-                  />
+                  <div className="flex">
+                    <button type="button" onClick={() => handleStep(ty, setTy, -1)} disabled={isAnimating} className={`${stepperButtonClass} rounded-l-md`} aria-label="Decrement Translate Y">-</button>
+                    <input
+                      id="ty"
+                      type="text"
+                      inputMode="decimal"
+                      value={ty}
+                      onChange={(e) => handleNumericChange(e, setTy)}
+                      className="w-full bg-background border-y border-border text-center text-text-primary focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 focus:z-10"
+                      disabled={isAnimating}
+                    />
+                    <button type="button" onClick={() => handleStep(ty, setTy, 1)} disabled={isAnimating} className={`${stepperButtonClass} rounded-r-md`} aria-label="Increment Translate Y">+</button>
+                  </div>
                 </div>
               </div>
             )}
