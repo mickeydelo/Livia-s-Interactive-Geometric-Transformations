@@ -206,7 +206,7 @@ function App() {
         </header>
         <main className="lg:grid lg:grid-cols-3 lg:gap-8">
           <div 
-            className="lg:col-span-2 sticky top-0 lg:static z-10 bg-background mb-8 lg:mb-0" 
+            className="lg:col-span-2 sticky top-0 lg:static z-10 bg-background mb-6 lg:mb-0" 
             ref={gridContainerRef}
           >
             <div className="w-full max-w-sm mx-auto lg:max-w-none">
