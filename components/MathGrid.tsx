@@ -17,8 +17,6 @@ type DragInfo = {
   index: number; // -1 for shape
   startPos: Point;
   initialPoints: Point[];
-  touchStartPos?: { clientX: number, clientY: number };
-  isDragging?: boolean;
 };
 
 const formatNumber = (num: number) => Number(num.toFixed(2)).toString();
@@ -78,58 +76,14 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     }
   }, [onGridClick, getCoordsFromEvent, dragInfo, animation]);
 
-  const handleDragEnd = useCallback(() => {
-    window.removeEventListener('mousemove', handleDragMove);
-    window.removeEventListener('mouseup', handleDragEnd);
-    window.removeEventListener('touchmove', handleDragMove);
-    window.removeEventListener('touchend', handleDragEnd);
-    
-    setIsMoving(false);
-    if (latestDraggedPointsRef.current && dragInfoRef.current?.isDragging) {
-        onDragEnd(latestDraggedPointsRef.current);
-    }
-    latestDraggedPointsRef.current = null;
-    dragInfoRef.current = null;
-    setTimeout(() => setDragInfo(null), 0);
-  }, [onDragEnd]);
-
   const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     const currentDragInfo = dragInfoRef.current;
     if (!currentDragInfo) return;
 
-    // For touch events, detect scroll vs. drag on first significant move
-    if (e instanceof TouchEvent && !currentDragInfo.isDragging && currentDragInfo.touchStartPos) {
-      const touch = e.touches[0];
-      const dx = Math.abs(touch.clientX - currentDragInfo.touchStartPos.clientX);
-      const dy = Math.abs(touch.clientY - currentDragInfo.touchStartPos.clientY);
-      const threshold = 5; // pixels to move before we decide
-
-      if (dx > threshold || dy > threshold) {
-        if (dy > dx) {
-          // It's a scroll gesture. Abort the drag to allow page scrolling.
-          handleDragEnd();
-          return;
-        } else {
-          // It's a drag gesture. Mark it as dragging.
-          currentDragInfo.isDragging = true;
-          setIsMoving(true);
-        }
-      } else {
-        // Not enough movement to decide, wait for the next event.
-        return;
-      }
-    }
-    
-    // For mouse events, any move starts a drag.
-    if (e instanceof MouseEvent && !currentDragInfo.isDragging) {
-        currentDragInfo.isDragging = true;
-        setIsMoving(true);
-    }
-
-    // If we've reached here, it's a confirmed drag, so prevent default actions.
     if (e.cancelable) {
       e.preventDefault();
     }
+    setIsMoving(true);
 
     const currentPos = getCoordsFromEvent(e);
     if (!currentPos) return;
@@ -157,11 +111,30 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     }
     onPointsDrag(newPoints);
     latestDraggedPointsRef.current = newPoints;
-  }, [onPointsDrag, getCoordsFromEvent, handleDragEnd]);
+  }, [onPointsDrag, getCoordsFromEvent]);
   
+  const handleDragEnd = useCallback(() => {
+    window.removeEventListener('mousemove', handleDragMove);
+    window.removeEventListener('mouseup', handleDragEnd);
+    window.removeEventListener('touchmove', handleDragMove);
+    window.removeEventListener('touchend', handleDragEnd);
+    
+    setIsMoving(false);
+    if (latestDraggedPointsRef.current) {
+        onDragEnd(latestDraggedPointsRef.current);
+    }
+    latestDraggedPointsRef.current = null;
+
+    dragInfoRef.current = null;
+    setTimeout(() => setDragInfo(null), 0);
+  }, [handleDragMove, onDragEnd]);
+
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent, type: 'point' | 'shape', index = -1) => {
     if (animation) return;
     e.stopPropagation();
+    if (e.nativeEvent.cancelable) {
+       e.preventDefault();
+    }
     
     if (window.navigator.vibrate) {
       window.navigator.vibrate(50);
@@ -176,15 +149,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
       index,
       startPos,
       initialPoints: points,
-      isDragging: false,
     };
-    
-    if ('touches' in e.nativeEvent) {
-      newDragInfo.touchStartPos = {
-        clientX: e.nativeEvent.touches[0].clientX,
-        clientY: e.nativeEvent.touches[0].clientY,
-      };
-    }
     
     setDragInfo(newDragInfo);
     dragInfoRef.current = newDragInfo;
