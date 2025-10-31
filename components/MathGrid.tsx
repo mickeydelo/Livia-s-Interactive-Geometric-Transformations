@@ -18,6 +18,7 @@ type DragInfo = {
   startPos: Point;
   initialPoints: Point[];
   touchStartPos?: { clientX: number, clientY: number };
+  isDragging?: boolean;
 };
 
 const formatNumber = (num: number) => Number(num.toFixed(2)).toString();
@@ -29,7 +30,6 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
   const dragInfoRef = useRef<DragInfo | null>(null);
   const latestDraggedPointsRef = useRef<Point[] | null>(null);
   const animateRef = useRef<SVGAnimateElement>(null);
-  const scrollLock = useRef(false);
   const unit = 1; 
   const halfGrid = gridSize / 2;
 
@@ -85,38 +85,51 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     window.removeEventListener('touchend', handleDragEnd);
     
     setIsMoving(false);
-    if (latestDraggedPointsRef.current && !scrollLock.current) {
+    if (latestDraggedPointsRef.current && dragInfoRef.current?.isDragging) {
         onDragEnd(latestDraggedPointsRef.current);
     }
     latestDraggedPointsRef.current = null;
-    scrollLock.current = false; // Reset lock
     dragInfoRef.current = null;
     setTimeout(() => setDragInfo(null), 0);
   }, [onDragEnd]);
 
   const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     const currentDragInfo = dragInfoRef.current;
-    if (!currentDragInfo || scrollLock.current) return;
+    if (!currentDragInfo) return;
 
-    // Gesture detection for touch events to distinguish dragging from scrolling
-    if (e instanceof TouchEvent && !isMoving && currentDragInfo.touchStartPos) {
+    // For touch events, detect scroll vs. drag on first significant move
+    if (e instanceof TouchEvent && !currentDragInfo.isDragging && currentDragInfo.touchStartPos) {
       const touch = e.touches[0];
       const dx = Math.abs(touch.clientX - currentDragInfo.touchStartPos.clientX);
       const dy = Math.abs(touch.clientY - currentDragInfo.touchStartPos.clientY);
-      const scrollThreshold = 5; // pixels
-      
-      // If vertical movement is greater than horizontal, it's a scroll.
-      if (dy > dx && dy > scrollThreshold) {
-        scrollLock.current = true;
-        handleDragEnd(); // Abort drag to allow scrolling.
+      const threshold = 5; // pixels to move before we decide
+
+      if (dx > threshold || dy > threshold) {
+        if (dy > dx) {
+          // It's a scroll gesture. Abort the drag to allow page scrolling.
+          handleDragEnd();
+          return;
+        } else {
+          // It's a drag gesture. Mark it as dragging.
+          currentDragInfo.isDragging = true;
+          setIsMoving(true);
+        }
+      } else {
+        // Not enough movement to decide, wait for the next event.
         return;
       }
     }
+    
+    // For mouse events, any move starts a drag.
+    if (e instanceof MouseEvent && !currentDragInfo.isDragging) {
+        currentDragInfo.isDragging = true;
+        setIsMoving(true);
+    }
 
+    // If we've reached here, it's a confirmed drag, so prevent default actions.
     if (e.cancelable) {
       e.preventDefault();
     }
-    setIsMoving(true);
 
     const currentPos = getCoordsFromEvent(e);
     if (!currentPos) return;
@@ -144,7 +157,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     }
     onPointsDrag(newPoints);
     latestDraggedPointsRef.current = newPoints;
-  }, [onPointsDrag, getCoordsFromEvent, handleDragEnd, isMoving]);
+  }, [onPointsDrag, getCoordsFromEvent, handleDragEnd]);
   
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent, type: 'point' | 'shape', index = -1) => {
     if (animation) return;
@@ -154,7 +167,6 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
       window.navigator.vibrate(50);
     }
     setIsMoving(false);
-    scrollLock.current = false;
 
     const startPos = getCoordsFromEvent(e);
     if (!startPos) return;
@@ -164,6 +176,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
       index,
       startPos,
       initialPoints: points,
+      isDragging: false,
     };
     
     if ('touches' in e.nativeEvent) {
