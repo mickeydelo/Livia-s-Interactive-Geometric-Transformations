@@ -37,13 +37,6 @@ const Controls: React.FC<ControlsProps> = ({ onApply, onReset, isShapeComplete, 
     setter(String(current + step));
   };
   
-  const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (value: string) => void) => {
-    const newValue = e.target.value;
-    if (newValue === '' || newValue === '-' || /^-?\d*\.?\d*$/.test(newValue)) {
-      setter(newValue);
-    }
-  };
-
   const commonInputClass = "w-full bg-background border border-border rounded-md px-3 py-2 text-text-primary focus:ring-2 focus:ring-primary focus:border-primary transition duration-150";
   const commonButtonClass = "w-full py-2 px-4 rounded-md font-semibold transition duration-200";
   const disabledButtonClass = "bg-gray-600 text-gray-400 cursor-not-allowed";
@@ -135,7 +128,7 @@ const Controls: React.FC<ControlsProps> = ({ onApply, onReset, isShapeComplete, 
                       type="text"
                       inputMode="decimal"
                       value={tx}
-                      onChange={(e) => handleNumericChange(e, setTx)}
+                      readOnly
                       className="w-full bg-background border-y border-border text-center text-text-primary focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 focus:z-10"
                       disabled={isAnimating}
                     />
@@ -151,7 +144,7 @@ const Controls: React.FC<ControlsProps> = ({ onApply, onReset, isShapeComplete, 
                       type="text"
                       inputMode="decimal"
                       value={ty}
-                      onChange={(e) => handleNumericChange(e, setTy)}
+                      readOnly
                       className="w-full bg-background border-y border-border text-center text-text-primary focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 focus:z-10"
                       disabled={isAnimating}
                     />
