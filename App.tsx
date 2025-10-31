@@ -237,7 +237,7 @@ function App() {
             </div>
           </div>
         </main>
-        <footer className="text-center text-text-secondary text-sm mt-8">
+        <footer className="text-center text-text-secondary text-sm mt-8 opacity-50">
           ©DeLorenzo - {currentYear}
         </footer>
       </div>

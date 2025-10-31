@@ -17,6 +17,7 @@ type DragInfo = {
   index: number; // -1 for shape
   startPos: Point;
   initialPoints: Point[];
+  touchStartPos?: { clientX: number, clientY: number };
 };
 
 const formatNumber = (num: number) => Number(num.toFixed(2)).toString();
@@ -28,6 +29,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
   const dragInfoRef = useRef<DragInfo | null>(null);
   const latestDraggedPointsRef = useRef<Point[] | null>(null);
   const animateRef = useRef<SVGAnimateElement>(null);
+  const scrollLock = useRef(false);
   const unit = 1; 
   const halfGrid = gridSize / 2;
 
@@ -76,9 +78,40 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     }
   }, [onGridClick, getCoordsFromEvent, dragInfo, animation]);
 
+  const handleDragEnd = useCallback(() => {
+    window.removeEventListener('mousemove', handleDragMove);
+    window.removeEventListener('mouseup', handleDragEnd);
+    window.removeEventListener('touchmove', handleDragMove);
+    window.removeEventListener('touchend', handleDragEnd);
+    
+    setIsMoving(false);
+    if (latestDraggedPointsRef.current && !scrollLock.current) {
+        onDragEnd(latestDraggedPointsRef.current);
+    }
+    latestDraggedPointsRef.current = null;
+    scrollLock.current = false; // Reset lock
+    dragInfoRef.current = null;
+    setTimeout(() => setDragInfo(null), 0);
+  }, [onDragEnd]);
+
   const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     const currentDragInfo = dragInfoRef.current;
-    if (!currentDragInfo) return;
+    if (!currentDragInfo || scrollLock.current) return;
+
+    // Gesture detection for touch events to distinguish dragging from scrolling
+    if (e instanceof TouchEvent && !isMoving && currentDragInfo.touchStartPos) {
+      const touch = e.touches[0];
+      const dx = Math.abs(touch.clientX - currentDragInfo.touchStartPos.clientX);
+      const dy = Math.abs(touch.clientY - currentDragInfo.touchStartPos.clientY);
+      const scrollThreshold = 5; // pixels
+      
+      // If vertical movement is greater than horizontal, it's a scroll.
+      if (dy > dx && dy > scrollThreshold) {
+        scrollLock.current = true;
+        handleDragEnd(); // Abort drag to allow scrolling.
+        return;
+      }
+    }
 
     if (e.cancelable) {
       e.preventDefault();
@@ -111,35 +144,17 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     }
     onPointsDrag(newPoints);
     latestDraggedPointsRef.current = newPoints;
-  }, [onPointsDrag, getCoordsFromEvent]);
+  }, [onPointsDrag, getCoordsFromEvent, handleDragEnd, isMoving]);
   
-  const handleDragEnd = useCallback(() => {
-    window.removeEventListener('mousemove', handleDragMove);
-    window.removeEventListener('mouseup', handleDragEnd);
-    window.removeEventListener('touchmove', handleDragMove);
-    window.removeEventListener('touchend', handleDragEnd);
-    
-    setIsMoving(false);
-    if (latestDraggedPointsRef.current) {
-        onDragEnd(latestDraggedPointsRef.current);
-    }
-    latestDraggedPointsRef.current = null;
-
-    dragInfoRef.current = null;
-    setTimeout(() => setDragInfo(null), 0);
-  }, [handleDragMove, onDragEnd]);
-
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent, type: 'point' | 'shape', index = -1) => {
     if (animation) return;
     e.stopPropagation();
-    if (e.nativeEvent.cancelable) {
-       e.preventDefault();
-    }
     
     if (window.navigator.vibrate) {
       window.navigator.vibrate(50);
     }
     setIsMoving(false);
+    scrollLock.current = false;
 
     const startPos = getCoordsFromEvent(e);
     if (!startPos) return;
@@ -150,6 +165,13 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
       startPos,
       initialPoints: points,
     };
+    
+    if ('touches' in e.nativeEvent) {
+      newDragInfo.touchStartPos = {
+        clientX: e.nativeEvent.touches[0].clientX,
+        clientY: e.nativeEvent.touches[0].clientY,
+      };
+    }
     
     setDragInfo(newDragInfo);
     dragInfoRef.current = newDragInfo;
