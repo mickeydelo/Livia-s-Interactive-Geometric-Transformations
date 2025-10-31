@@ -221,18 +221,20 @@ function App() {
               />
             </div>
           </div>
-          <div className="lg:col-span-1 flex flex-col gap-8">
-            <Controls 
-              onApply={handleApplyTransform} 
-              onReset={handleReset} 
-              isShapeComplete={points.length === 4}
-              isAnimating={isAnimating}
-            />
-            <TransformationLog 
-              history={history} 
-              onHighlight={handleHighlightPoint}
-              highlightedPointIndex={highlightedPointIndex}
-            />
+          <div className="lg:col-span-1">
+            <div className="flex flex-col gap-8 lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)]">
+              <Controls 
+                onApply={handleApplyTransform} 
+                onReset={handleReset} 
+                isShapeComplete={points.length === 4}
+                isAnimating={isAnimating}
+              />
+              <TransformationLog 
+                history={history} 
+                onHighlight={handleHighlightPoint}
+                highlightedPointIndex={highlightedPointIndex}
+              />
+            </div>
           </div>
         </main>
         <footer className="text-center text-text-secondary text-sm mt-8">
