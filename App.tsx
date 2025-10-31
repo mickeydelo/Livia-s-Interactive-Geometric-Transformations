@@ -97,20 +97,29 @@ function App() {
     });
   }, []);
 
-  const handlePointsUpdate = useCallback((newPoints: Point[]) => {
+  const handlePointsDrag = useCallback((newPoints: Point[]) => {
     setPoints(newPoints);
+    if (history.length > 0) {
+      const lastLogEntry = history[0];
+      const { type, params } = lastLogEntry;
+      const newTransformedPoints = applyTransform(newPoints, type, params);
+      setTransformedPoints(newTransformedPoints.map(p => ({ x: parseFloat(p.x.toFixed(2)), y: parseFloat(p.y.toFixed(2)) })));
+    }
+  }, [history]);
 
+  const handleDragEnd = useCallback((finalPoints: Point[]) => {
     if (history.length > 0) {
       const lastLogEntry = history[0];
       const { type, params } = lastLogEntry;
       
-      const newTransformedPoints = applyTransform(newPoints, type, params);
+      const newTransformedPoints = applyTransform(finalPoints, type, params);
+      // This is slightly redundant as it's set in onDrag, but ensures the final state is accurate
       setTransformedPoints(newTransformedPoints.map(p => ({ x: parseFloat(p.x.toFixed(2)), y: parseFloat(p.y.toFixed(2)) })));
 
-      const newMath = generateMath(newPoints, type, params);
+      const newMath = generateMath(finalPoints, type, params);
       const updatedLogEntry: TransformationLogEntry = {
         ...lastLogEntry,
-        originalPoints: newPoints,
+        originalPoints: finalPoints,
         transformedPoints: newTransformedPoints,
         math: newMath,
       };
@@ -172,7 +181,7 @@ function App() {
         description,
         math,
       };
-      setHistory(prev => [logEntry, ...prev]);
+      setHistory(prev => [logEntry, ...prev].slice(0, 2));
 
       setAnimation(null);
       setIsAnimating(false);
@@ -205,7 +214,8 @@ function App() {
                 points={points}
                 transformedPoints={transformedPoints}
                 onGridClick={handleGridClick}
-                onPointsUpdate={handlePointsUpdate}
+                onPointsDrag={handlePointsDrag}
+                onDragEnd={handleDragEnd}
                 highlightedPointIndex={highlightedPointIndex}
                 animation={animation}
               />

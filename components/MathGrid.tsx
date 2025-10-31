@@ -5,7 +5,8 @@ interface MathGridProps {
   points: Point[];
   transformedPoints: Point[] | null;
   onGridClick: (point: Point) => void;
-  onPointsUpdate: (points: Point[]) => void;
+  onPointsDrag: (points: Point[]) => void;
+  onDragEnd: (points: Point[]) => void;
   gridSize?: number;
   highlightedPointIndex: number | null;
   animation: { from: Point[]; to: Point[]; key: number } | null;
@@ -20,10 +21,12 @@ type DragInfo = {
 
 const formatNumber = (num: number) => Number(num.toFixed(2)).toString();
 
-const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridClick, onPointsUpdate, gridSize = 20, highlightedPointIndex, animation }) => {
+const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridClick, onPointsDrag, onDragEnd, gridSize = 20, highlightedPointIndex, animation }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragInfo, setDragInfo] = useState<DragInfo | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
   const dragInfoRef = useRef<DragInfo | null>(null);
+  const latestDraggedPointsRef = useRef<Point[] | null>(null);
   const animateRef = useRef<SVGAnimateElement>(null);
   const unit = 1; 
   const halfGrid = gridSize / 2;
@@ -80,6 +83,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     if (e.cancelable) {
       e.preventDefault();
     }
+    setIsMoving(true);
 
     const currentPos = getCoordsFromEvent(e);
     if (!currentPos) return;
@@ -105,8 +109,9 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
         y: Math.round(p.y + dy),
       }));
     }
-    onPointsUpdate(newPoints);
-  }, [onPointsUpdate, getCoordsFromEvent]);
+    onPointsDrag(newPoints);
+    latestDraggedPointsRef.current = newPoints;
+  }, [onPointsDrag, getCoordsFromEvent]);
   
   const handleDragEnd = useCallback(() => {
     window.removeEventListener('mousemove', handleDragMove);
@@ -114,9 +119,15 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     window.removeEventListener('touchmove', handleDragMove);
     window.removeEventListener('touchend', handleDragEnd);
     
+    setIsMoving(false);
+    if (latestDraggedPointsRef.current) {
+        onDragEnd(latestDraggedPointsRef.current);
+    }
+    latestDraggedPointsRef.current = null;
+
     dragInfoRef.current = null;
     setTimeout(() => setDragInfo(null), 0);
-  }, [handleDragMove]);
+  }, [handleDragMove, onDragEnd]);
 
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent, type: 'point' | 'shape', index = -1) => {
     if (animation) return;
@@ -128,6 +139,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     if (window.navigator.vibrate) {
       window.navigator.vibrate(50);
     }
+    setIsMoving(false);
 
     const startPos = getCoordsFromEvent(e);
     if (!startPos) return;
@@ -141,6 +153,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
     
     setDragInfo(newDragInfo);
     dragInfoRef.current = newDragInfo;
+    latestDraggedPointsRef.current = points;
     
     window.addEventListener('mousemove', handleDragMove);
     window.addEventListener('mouseup', handleDragEnd);
@@ -273,7 +286,7 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
   );
 
   return (
-    <div className="w-full aspect-square bg-background rounded-lg shadow-lg p-4 flex justify-center items-center">
+    <div className="w-full aspect-square bg-background rounded-lg shadow-lg flex justify-center items-center">
       <svg
         ref={svgRef}
         className={`w-full h-full touch-none ${dragInfo ? 'cursor-grabbing' : 'cursor-crosshair'}`}
@@ -340,24 +353,28 @@ const MathGrid: React.FC<MathGridProps> = ({ points, transformedPoints, onGridCl
 
         {points.map((p, i) => {
           const isBeingDragged = dragInfo?.type === 'point' && dragInfo.index === i;
+          const pointStyle: React.CSSProperties = {
+            transition: isMoving ? 'opacity 0.15s ease-out' : 'transform 0.15s ease-out, opacity 0.15s ease-out',
+          };
+
           return (
             <g
               key={`point-orig-group-${i}`}
-              style={{ transition: 'transform 0.15s ease-out, opacity 0.15s ease-out' }}
-              transform={isBeingDragged ? `translate(${p.x} ${p.y}) scale(1.5) translate(${-p.x} ${-p.y})` : ''}
+              style={pointStyle}
+              transform={`translate(${p.x} ${p.y}) scale(${isBeingDragged ? 1.5 : 1})`}
               opacity={isBeingDragged ? 0.75 : 1}
             >
-              {i === highlightedPointIndex && renderHighlight(p, '#a5b4fc')}
+              {i === highlightedPointIndex && renderHighlight({ x: 0, y: 0 }, '#a5b4fc')}
               <circle
-                cx={p.x}
-                cy={p.y}
+                cx="0"
+                cy="0"
                 r="0.4"
                 fill="#4f46e5"
                 style={{ pointerEvents: 'none' }}
               />
               <circle
-                cx={p.x}
-                cy={p.y}
+                cx="0"
+                cy="0"
                 r="1.2"
                 fill="transparent"
                 onMouseDown={(e) => handleDragStart(e, 'point', i)}

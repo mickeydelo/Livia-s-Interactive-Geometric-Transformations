@@ -13,12 +13,12 @@ const TransformationLog: React.FC<TransformationLogProps> = ({ history, onHighli
   const formatPoint = (p: Point) => `(${formatNumber(p.x)}, ${formatNumber(p.y)})`;
 
   return (
-    <div className="bg-surface px-6 py-4 pt-0 rounded-lg shadow-lg">
+    <div className="bg-surface px-6 py-4 pt-0 rounded-lg shadow-lg lg:flex lg:flex-col lg:flex-1 lg:min-h-0">
       <h2 className="text-2xl font-bold text-text-primary pt-4 pb-4">History</h2>
       {history.length === 0 ? (
         <p className="text-text-secondary text-center py-8">No transformations applied yet.</p>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 lg:overflow-y-auto lg:pr-2 lg:flex-1">
           {history.map(entry => (
             <div key={entry.id} className="bg-background p-4 rounded-md border border-border">
               <h3 className="font-semibold text-lg text-primary mb-2">{entry.type}</h3>
